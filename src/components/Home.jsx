@@ -1,49 +1,48 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import Chart from "./Chart";
+import Chart from "../common/components/Chart";
+import { mapToChartData } from "../common/utils/mapData";
+import AppButton from "../common/components/AppButton";
+import appConstants from "../common/constants/appConstants";
+import Loader from "../common/components/Loader";
 
-const Home = () => {
-  const [data, setData] = useState();
+const Home = ({ theme }) => {
+  const [data, setData] = useState([]);
   const [type, setType] = useState("ohlc");
+
   useEffect(() => {
     getData();
-    return () => {
-      console.log("bye home");
-    };
+    return () => {};
   }, []);
   const getData = async () => {
     try {
       const res = await axios.get(
-        "http://kaboom.rksv.net/api/historical?interval=1"
+        `${appConstants.BASE_URL}/api/historical?interval=1`
       );
 
       let data = res.data;
-      let historicalData = data.map((val) => {
-        let splittedArr = val.split(",");
-        const [timestamp, open, high, low, close] = splittedArr;
-
-        return {
-          x: new Date(parseFloat(timestamp)),
-          y: [parseInt(open), parseInt(high), parseInt(low), parseInt(close)],
-        };
-      });
-      console.log(historicalData);
+      let historicalData = mapToChartData(data);
       setData(historicalData);
     } catch (error) {
       console.log(error);
     }
   };
   return (
-    <div className="home-container">
-      {type === "ohlc" ? (
-        <button onClick={() => setType("candlestick")}>
-          Switch To CandleStick
-        </button>
-      ) : (
-        <button onClick={() => setType("ohlc")}>Switch To OHLC</button>
-      )}
+    <div className='home-container'>
+      {data.length > 0 ? (
+        <>
+          <AppButton type={type} setType={setType} />
 
-      <Chart data={data} type={type} />
+          <Chart
+            chartData={data}
+            type={type}
+            title={"Historical Data"}
+            theme={theme ? "dark2" : "light2"}
+          />
+        </>
+      ) : (
+        <Loader />
+      )}
     </div>
   );
 };

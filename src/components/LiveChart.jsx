@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from "react";
 import io from "socket.io-client";
-import { csvParse } from "d3-dsv";
+import AppButton from "../common/components/AppButton";
+import { mapToChartData } from "../common/utils/mapData";
+import Chart from "../common/components/Chart";
+import appConstants from "../common/constants/appConstants";
+import Loader from "../common/components/Loader";
 
 let socket;
-const LiveChart = () => {
+const LiveChart = ({ theme }) => {
   const [value, setValue] = useState([]);
-  const [data, setData] = useState();
+  const [data, setData] = useState([]);
+  const [type, setType] = useState("ohlc");
 
-  const ENDPOINT = "http://kaboom.rksv.net/watch";
+  const ENDPOINT = `${appConstants.BASE_URL}/watch`;
 
   useEffect(() => {
     socket = io(ENDPOINT, {
@@ -18,25 +23,44 @@ const LiveChart = () => {
 
     socket.emit("sub", { state: true });
 
-    socket.on("data", (data, callback) => {
-      let str = "timestamp,open,high,low,close,volume";
-      value.push(data);
-      setValue(value);
-      const csvData = str + "\n" + value.join("\n");
-      const historicalData = csvParse(csvData);
-      console.log(historicalData);
-      setData(historicalData);
-      callback(1);
-    });
+    socket.on(
+      "data",
+      (data, callback) => {
+        value.push(data);
+        setValue(value);
+        let liveData = [];
+        if (value.length > 2) {
+          liveData = mapToChartData(value);
+        }
+        console.log(liveData);
+        setData(liveData);
+        callback(1);
+      },
+      [data]
+    );
 
     return () => {
       socket.emit("unsub", { state: false });
       socket.off();
     };
   });
+
   return (
-    <div className="home-container">
-      <h1>Live Charts</h1>
+    <div className='live-chart-container'>
+      {value.length > 3 ? (
+        <>
+          <AppButton type={type} setType={setType} />
+
+          <Chart
+            chartData={data}
+            type={type}
+            title={"Live Charts"}
+            theme={theme ? "dark2" : "light2"}
+          />
+        </>
+      ) : (
+        <Loader />
+      )}
     </div>
   );
 };
