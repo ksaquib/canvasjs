@@ -1,24 +1,26 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
-
+import React from "react";
+import { Route, Switch } from "react-router-dom";
+import Dashboard from "./components/Dashboard";
+import Home from "./components/Home";
+import LiveChart from "./components/LiveChart";
+import "./App.css";
+const routes = [
+  { path: "/", name: "Dashboard", Component: Dashboard },
+  { path: "/home", name: "Home", Component: Home },
+  {
+    path: "/live-charts",
+    name: "Live Charts",
+    Component: LiveChart,
+  },
+];
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="container-fluid">
+      <Switch>
+        {routes.map(({ path, name, Component }) => (
+          <Route exact path={path} component={Component} key={name} />
+        ))}
+      </Switch>
     </div>
   );
 }
